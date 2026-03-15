@@ -1,0 +1,17 @@
+[classes.Tracker.ActiveVariantUID]
+type = "string"
+doc = "variant of the pack that is currently loaded"
+
+[classes.Tracker.AddItems]
+type = "function"
+doc = "load items from json"
+
+[classes.Tracker.AddItems.return]
+name = "ok"
+type = "boolean"
+doc = "true on success"
+
+[[classes.Tracker.AddItems.args]]
+name = "jsonFilename"
+type = "string"
+doc = "string file to load, relative to variant folder or root of the pack (will try both)"
