@@ -4,11 +4,11 @@
 #     "pyyaml>=6.0.3",
 # ]
 # ///
-import tomllib
 import yaml
 
-with open("poptracker.toml", "rb") as f:
-    data = tomllib.load(f)
+with open("poptracker.yml") as f:
+    data = yaml.safe_load(f)
+
 
 print(data)
 

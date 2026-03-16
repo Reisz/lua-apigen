@@ -1,0 +1,16 @@
+classes:
+  Tracker:
+    ActiveVariantUID:
+      type: string
+      doc: variant of the pack that is currently loaded
+    AddItems:
+      type: function
+      doc: load items from json
+      return:
+        name: ok
+        type: boolean
+        doc: true on success
+      args:
+        - name: jsonFilename
+          type: string
+          doc: string file to load, relative to variant folder or root of the pack (will try both)
