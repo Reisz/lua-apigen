@@ -5,6 +5,6 @@
 Tracker = {}
 
 ---load items from json
----@param jsonFilename string string file to load, relative to variant folder or root of the pack (will try both)
+---@param jsonFilename string file to load, relative to variant folder or root of the pack (will try both)
 ---@return boolean ok # true on success
 function Tracker:AddItems(jsonFilename) end
