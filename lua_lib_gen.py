@@ -101,3 +101,127 @@ with open("./doc/index.rst", "w") as f:
                 f.write(f":rtype: {ret['type']}\n")
             else:
                 pass
+
+CPP_RET_TYPES = {
+    "boolean": "bool",
+    "string": "std::string",
+}
+
+CPP_ARG_TYPES = {
+    "string": "const std::string&",
+}
+
+CPP_TO_LUA = {
+    "string": lambda e: f"{e}.c_str()",
+}
+
+for class_name, class_fields in data["classes"].items():
+    with open(f"./gen/include/{class_name.lower()}.h", "w") as f:
+        f.write("# pragma once\n\n")
+
+        f.write("#include <luaglue/luainterface.h>\n")
+        f.write("\n")
+
+        f.write(f"class {class_name};\n")
+        f.write(f"class {class_name} final : public LuaInterface<{class_name}> {{\n")
+
+        f.write(" " * 4)
+        f.write("friend class LuaInterface;\n\n")
+
+        f.write("public:\n")
+
+        for field_name, field in class_fields.items():
+            if field["type"] == "function":
+                f.write(" " * 4)
+                f.write("/**\n")
+
+                f.write(" " * 4)
+                f.write(f"* @brief {field['doc']}\n")
+
+                for arg in field["args"]:
+                    f.write(" " * 4)
+                    f.write(f"* @param {arg['name']} {arg['doc']}\n")
+
+                f.write(" " * 4)
+                f.write(f"* @return {field['return']['doc']}\n")
+
+                f.write(" " * 4)
+                f.write("*/\n")
+
+                args = ", ".join(
+                    f"{CPP_ARG_TYPES[arg['type']]} {arg['name']}"
+                    for arg in field["args"]
+                )
+                f.write(" " * 4)
+                f.write(
+                    f"{CPP_RET_TYPES[field['return']['type']]} {field_name}({args});\n"
+                )
+
+        f.write("\n")
+        f.write("private:\n")
+
+        for field_name, field in class_fields.items():
+            if field["type"] != "function":
+                f.write(" " * 4)
+                f.write(f"/** @brief {field['doc']} */\n")
+
+                f.write(" " * 4)
+                f.write(f"{CPP_RET_TYPES[field['type']]} Get{field_name}() const;\n")
+
+        f.write("\n")
+        f.write("protected:\n")
+
+        f.write(" " * 4)
+        f.write("// NOTE: inline stuff can be moved out-of-line in future\n\n")
+
+        f.write(" " * 4)
+        f.write(f'inline static constexpr const char Lua_Name[] = "{class_name}";\n')
+
+        f.write(" " * 4)
+        f.write("inline static const LuaInterface::MethodMap Lua_Methods {\n")
+
+        for field_name, field in class_fields.items():
+            if field["type"] == "function":
+                args = ", ".join(CPP_ARG_TYPES[arg["type"]] for arg in field["args"])
+
+                f.write(" " * 8)
+                f.write(f"LUA_METHOD({class_name}, {field_name}, {args}),\n")
+                pass
+
+        f.write(" " * 4)
+        f.write("};\n\n")
+
+        f.write(" " * 4)
+        f.write("inline int Lua_Index(lua_state *L, const char* key) override {\n")
+        if_string = "if"
+        for field_name, field in class_fields.items():
+            if field["type"] != "function":
+                f.write(" " * 8)
+                f.write(f'{if_string} (strcmp(key, "{field_name}") == 0) {{\n')
+                if_string = "} else if"
+
+                getter = f"Get{field_name}()"
+                converted = CPP_TO_LUA[field["type"]](getter)
+
+                f.write(" " * 12)
+                f.write(f"lua_push{field['type']}(L, {converted});\n")
+
+                f.write(" " * 12)
+                f.write("return 1;\n")
+
+        f.write(" " * 8)
+        f.write("} else {\n")
+
+        f.write(" " * 12)
+        f.write(f'printf("{class_name}::Lua_Index(\\"%s\\") unknown\\n", key);\n')
+
+        f.write(" " * 8)
+        f.write("}\n\n")
+
+        f.write(" " * 8)
+        f.write("return 0;\n")
+
+        f.write(" " * 4)
+        f.write("}\n")
+
+        f.write("};\n")
